@@ -1,6 +1,7 @@
 package apitesting.LibMS.stepdefinitions.createBook;
 
 import apitesting.LibMS.utils.ApiRequest;
+import apitesting.LibMS.utils.AuthenticationUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.java.AfterAll;
@@ -11,27 +12,33 @@ import io.restassured.response.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CreateNewBookSteps {
     private static final Logger logger = LoggerFactory.getLogger(CreateNewBookSteps.class);
     Response response;
-    static String deleteEndpoint;
+    public static List<Integer> createdBooksIDs = new ArrayList<>();
 
     @When("I send a POST request to {string} with:")
     public void i_send_a_POST_request_to_with(String endpoint, String body) {
         ApiRequest.post(endpoint, body);
-        this.response=ApiRequest.response;
+        this.response = ApiRequest.response;
+
         if (ApiRequest.response.statusCode() == 201) {
             String responseBody = ApiRequest.response.getBody().asString();
             JsonPath jsonPath = new JsonPath(responseBody);
             int createdBookId = jsonPath.getInt("id"); // Assuming the response contains the book ID
-            this.deleteEndpoint = endpoint + "/" + createdBookId;
+            createdBooksIDs.add(createdBookId); // Add the created book ID to the list
+            logger.info("Book created with ID: {}", createdBookId);
         } else {
             System.err.println("POST request failed. Status Code: " + ApiRequest.response.statusCode());
         }
     }
-    @When("I should receive a {int} response code")
+
+    @Then("I should receive a {int} response code")
     public void i_should_receive_a_response_code(int expectedStatusCode) {
         logger.info("Validating response status code...");
         logger.info("Expected Status Code: {}, Actual Status Code: {}", expectedStatusCode, ApiRequest.response.statusCode());
@@ -59,7 +66,13 @@ public class CreateNewBookSteps {
 
     @AfterAll
     public static void after_all() {
-        ApiRequest.delete(deleteEndpoint);
+        AuthenticationUtil.loginAsUser();
+        logger.info("Deleting all created books...");
+        for (int bookId : createdBooksIDs) {
+            String deleteEndpoint = "/api/books/" + bookId;
+            ApiRequest.delete(deleteEndpoint);
+            logger.info("Deleted book with ID: {}", bookId);
+        }
+        createdBooksIDs.clear();
     }
 }
-

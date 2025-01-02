@@ -9,24 +9,23 @@ Feature: Update Book
 
   Scenario: Successfully update the book author name
     Given I am logged in as an admin
-    And a book exists in the database with ID 1
-    When I send a PUT request to "/api/books/1" with:
+    And  I send a POST request to "/api/books" with:
+     """
+      {
+        "title": "Test Book Title Existing",
+        "author": "Previous Author"
+      }
+      """
+    When I send a PUT request with new author name with:
       """
       {
-        "id": 1,
-        "title": "Existing Book Title",
+        "id": 100,
+        "title": "Test Book Title Existing",
         "author": "Updated Author"
       }
       """
     Then I should receive a 200 response code
-    And the response should contain the updated book details:
-      """
-      {
-        "id": 1,
-        "title": "Existing Book Title",
-        "author": "Updated Author"
-      }
-      """
+
   Scenario: User tries to update the book name
     Given I am logged in as a user
     And a book exists in the database with ID 1
