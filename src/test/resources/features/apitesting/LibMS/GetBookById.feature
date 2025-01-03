@@ -5,8 +5,7 @@ Feature: Retrieve a book by ID
 
   Scenario: Book not found with the given ID
     Given I am logged in as an admin
-    And the database does not contain a book with ID 888
-    When I send a GET request to "/api/books/888" endpoint
+    When I send a GET request with non existing Book Id
     Then I should receive a 404 response code
 
   Scenario: Successfully fetch already available book by user
